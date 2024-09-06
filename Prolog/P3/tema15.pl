@@ -1,0 +1,99 @@
+% 15.Se da un numar n pozitiv. Se cere sa se determine toate
+% descompunerile lui n ca suma de numere naturale consecutive
+
+% Predicatul 'candidat' genereaza, pe rand,
+% elementele N-1, N-2,...,0.
+% Ex: candidat(3,X) => X=2, X=1, X=0
+%
+% Model recursiv:
+%     candidat(N) = 1. N-1
+%		    2. candidat(N-1), daca N>1
+%
+% Domeniu: element = integer
+% Argumente: candidat(N: element, E: element)
+% Modele de flux:(i, o) - nedeterminist, (i,i)-determinist
+
+candidat(N, E) :- E is N-1.
+candidat(N, E) :-
+	N>1,
+        N1 is N-1,
+        candidat(N1,E).
+
+% Predicatul auxiliar 'conditie' care genereaza urmatorul element
+% si verifica daca acesta poate fi adaugat in colectoare, pentru a
+% contribui la formarea unei solutii
+%
+% Model recursiv:
+%     conditie(N, SumCol, HCol) =
+%	      HCol-1, daca (HCol-1>0) si (HCol-1+SumCol<=N)
+%
+% Domeniu: element = integer
+% Argumente:conditie(N:element, SumCol:element, HCol:element, E:element)
+% Modele de flux: (i, i, i, o) - determinist, (i, i, i, i) - determinist
+conditie(N, SumCol, HCol, E) :-
+	HCol-1 > 0,
+	E is HCol-1,
+        Sum1 is SumCol+E,
+	Sum1 =< N.
+
+
+% Predicatul auxiliar 'descomp_aux' va genera cate o descompunere a lui
+% n ca suma de numere naturale consecutive
+%
+% Predicatul 'descompuneri' va genera toate descompunerile
+%
+% Model recursiv:
+%    descomp_aux(N, SumCol, Col) =
+%       1.Col, daca SumCol=N
+%	2.descomp_aux(N, SumCol+E, E U Col), daca (SumCol != N)
+%		si (E = conditie(N, SumCol, col1))
+%
+%    decompuneri(N) = descomp_aux(N, E, [E]),
+%	            unde E=candidat(N)
+%
+% Domeniu: element = integer
+%	   List = element*
+%
+% descompuneri(N:element, Col:list)
+% Modele de flux: (i,o) - nedeterminist
+descompuneri(N, Col) :-
+	candidat(N, E),
+	descomp_aux(N, Col, E, [E]).
+
+% descomp_aux(N: element, C:list, SumCol: element, Col:list)
+% Modele de flux: (i,o,i,i) - nedeterminist, (i, i, i, i) - determinist
+descomp_aux(N, Col, N, Col) :- !.
+descomp_aux(N, Col, SumCol, [H|T]):-
+	conditie(N, SumCol, H, E),
+	Sum1 is SumCol+E,
+	descomp_aux(N, Col, Sum1, [E|[H|T]]).
+
+% Predicatul principal 'toate_descomp' care se va folosi de predicatul
+% 'descompuneri',in modelul de flux (i,o), pentru a incapsula
+% toate solutiile problemei intr-o multime
+%
+% Model matematic:
+%     toate_descomp(N) = U descompuneri(N)
+%
+% Domeniu:element = integer
+%         List = element*
+% Argumente: toate_descomp(N: element, LRez: list)
+% Modele de flux:(i,o) - determinist, (i,i) - determinist
+toate_descomp(N, LRez) :-
+    findall(RPartial, descompuneri(N, RPartial), LRez).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
